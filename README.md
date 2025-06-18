@@ -24,6 +24,8 @@
 -  Interactive data tables with sorting and pagination
 -  Loading states and progress indicators for all API operations
 
+https://documenter.getpostman.com/view/26157218/2sA3kUG2mr
+
 ### .env
 -  QIKINK_CLIENT_ID=
 -  QIKINK_ACCESS_TOKEN=
