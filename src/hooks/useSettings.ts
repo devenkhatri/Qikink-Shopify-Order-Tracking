@@ -4,6 +4,7 @@ import { ApiConfig } from '../types';
 const DEFAULT_CONFIG: ApiConfig = {
   qikinkApiKey: '',
   qikinkApiUrl: 'https://api.qikink.com',
+  qikinkClientId: '',
   shopifyDomain: '',
   shopifyAccessToken: ''
 };

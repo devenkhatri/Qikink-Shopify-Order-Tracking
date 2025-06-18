@@ -15,11 +15,13 @@ function App() {
   const {
     orders,
     loading,
+    refreshing,
     searchTerm,
     setSearchTerm,
     statusFilter,
     setStatusFilter,
-    updateOrderTracking
+    updateOrderTracking,
+    refreshOrders
   } = useOrders();
 
   const { syncOrderStatus } = useQikinkApi();
@@ -44,15 +46,14 @@ function App() {
 
     setIsSyncing(true);
     try {
-      // Simulate syncing all orders
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await refreshOrders();
       setNotification({
-        message: 'All orders synced successfully',
+        message: 'Orders refreshed successfully',
         type: 'success'
       });
     } catch (error) {
       setNotification({
-        message: 'Failed to sync orders',
+        message: 'Failed to refresh orders',
         type: 'error'
       });
     } finally {
@@ -94,7 +95,7 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       <Header 
         onSync={handleSyncAll} 
-        isSyncing={isSyncing}
+        isSyncing={isSyncing || refreshing}
         onSettingsClick={() => setIsSettingsOpen(true)}
         isConfigured={isConfigured()}
       />
