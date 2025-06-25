@@ -34,4 +34,8 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  .bg-gray-25 {
+    background-color: #fafafa;
+  }
 }

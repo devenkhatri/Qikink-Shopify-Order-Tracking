@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ExternalLink, Truck, User, Mail, Calendar, Package, Edit3, Check, X } from 'lucide-react';
+import { ExternalLink, Truck, User, Mail, Calendar, Package, Edit3, Check, X, Phone, Link } from 'lucide-react';
 import { Order } from '@/types';
 import { OrderStatusBadge } from './OrderStatusBadge';
 
@@ -13,13 +13,14 @@ interface OrderCardProps {
 export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateTracking }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || '');
-  const [carrier, setCarrier] = useState(order.carrier || '');
+  const [trackingUrl, setTrackingUrl] = useState(order.trackingUrl || '');
+
+  console.log("Order", order)
 
   const handleSave = () => {
     onUpdateTracking(order.id, {
       trackingNumber,
-      carrier,
-      trackingUrl: trackingNumber ? `https://${carrier.toLowerCase()}.com/track/${trackingNumber}` : undefined,
+      trackingUrl,
       status: trackingNumber ? 'shipped' : order.status
     });
     setIsEditing(false);
@@ -27,7 +28,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateTracking })
 
   const handleCancel = () => {
     setTrackingNumber(order.trackingNumber || '');
-    setCarrier(order.carrier || '');
+    setTrackingUrl(order.trackingUrl || '');
     setIsEditing(false);
   };
 
@@ -82,6 +83,12 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateTracking })
             <Mail className="w-4 h-4 text-gray-400" />
             <span className="text-gray-600">{order.customerEmail}</span>
           </div>
+          {order.customerPhone && (
+            <div className="flex items-center space-x-2 text-sm">
+              <Phone className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-600">{order.customerPhone}</span>
+            </div>
+          )}
           <div className="flex items-center space-x-2 text-sm">
             <Calendar className="w-4 h-4 text-gray-400" />
             <span className="text-gray-600">{formatDate(order.createdAt)}</span>
@@ -103,7 +110,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateTracking })
 
       {isEditing ? (
         <div className="border-t pt-4 space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tracking Number
@@ -118,22 +125,15 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateTracking })
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Carrier
+                Tracking URL
               </label>
-              <select
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
+              <input
+                type="url"
+                value={trackingUrl}
+                onChange={(e) => setTrackingUrl(e.target.value)}
+                placeholder="Enter tracking URL (optional)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select carrier</option>
-                <option value="BlueDart">BlueDart</option>
-                <option value="DTDC">DTDC</option>
-                <option value="Delhivery">Delhivery</option>
-                <option value="Ecom Express">Ecom Express</option>
-                <option value="India Post">India Post</option>
-                <option value="FedEx">FedEx</option>
-                <option value="DHL">DHL</option>
-              </select>
+              />
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -155,23 +155,27 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateTracking })
         </div>
       ) : order.trackingNumber ? (
         <div className="border-t pt-4">
-          <div className="flex items-center justify-between">
+          <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Truck className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">
-                {order.carrier}: {order.trackingNumber}
-              </span>
+              <span className="text-sm text-gray-600 font-mono">{order.trackingNumber}</span>
             </div>
             {order.trackingUrl && (
-              <a
-                href={order.trackingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm transition-colors"
-              >
-                <span>Track</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Link className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">Tracking URL available</span>
+                </div>
+                <a
+                  href={order.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm transition-colors"
+                >
+                  <span>Track</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             )}
           </div>
         </div>

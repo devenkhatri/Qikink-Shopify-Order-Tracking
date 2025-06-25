@@ -8,6 +8,7 @@ const mockOrders: Order[] = [
     orderNumber: '#1001',
     customerName: 'Rajesh Kumar',
     customerEmail: 'rajesh@example.com',
+    customerPhone: '+91 98765 43210',
     createdAt: '2024-01-15T10:30:00Z',
     status: 'processing',
     total: 2499.99,
@@ -18,6 +19,7 @@ const mockOrders: Order[] = [
     orderNumber: '#1002',
     customerName: 'Priya Sharma',
     customerEmail: 'priya@example.com',
+    customerPhone: '+91 87654 32109',
     createdAt: '2024-01-14T14:22:00Z',
     status: 'shipped',
     total: 3599.50,
@@ -32,6 +34,7 @@ const mockOrders: Order[] = [
     orderNumber: '#1003',
     customerName: 'Amit Patel',
     customerEmail: 'amit@example.com',
+    customerPhone: '+91 76543 21098',
     createdAt: '2024-01-13T16:45:00Z',
     status: 'delivered',
     total: 1899.25,
@@ -46,6 +49,7 @@ const mockOrders: Order[] = [
     orderNumber: '#1004',
     customerName: 'Sneha Gupta',
     customerEmail: 'sneha@example.com',
+    customerPhone: '+91 65432 10987',
     createdAt: '2024-01-16T08:12:00Z',
     status: 'pending',
     total: 4999.99,
@@ -56,6 +60,7 @@ const mockOrders: Order[] = [
     orderNumber: '#1005',
     customerName: 'Vikram Singh',
     customerEmail: 'vikram@example.com',
+    customerPhone: '+91 54321 09876',
     createdAt: '2024-01-17T12:30:00Z',
     status: 'processing',
     total: 1299.00,
@@ -66,6 +71,7 @@ const mockOrders: Order[] = [
     orderNumber: '#1006',
     customerName: 'Kavya Reddy',
     customerEmail: 'kavya@example.com',
+    customerPhone: '+91 43210 98765',
     createdAt: '2024-01-18T15:45:00Z',
     status: 'shipped',
     total: 2799.75,
@@ -77,7 +83,44 @@ const mockOrders: Order[] = [
   }
 ];
 
-async function fetchShopifyOrders(domain: string, accessToken: string, limit: number = 50): Promise<Order[]> {
+// Generate additional mock orders to simulate pagination
+const generateMockOrders = (count: number): Order[] => {
+  const additionalOrders: Order[] = [];
+  const statuses: Order['status'][] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  const carriers = ['BlueDart', 'DTDC', 'Delhivery', 'Ecom Express', 'India Post'];
+  const names = [
+    'Arjun Mehta', 'Deepika Rao', 'Karan Joshi', 'Meera Nair', 'Rohit Agarwal',
+    'Sanya Kapoor', 'Varun Malhotra', 'Ananya Iyer', 'Nikhil Gupta', 'Pooja Sharma'
+  ];
+
+  for (let i = 7; i <= count; i++) {
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const name = names[Math.floor(Math.random() * names.length)];
+    const hasTracking = status === 'shipped' || status === 'delivered';
+    const carrier = hasTracking ? carriers[Math.floor(Math.random() * carriers.length)] : undefined;
+    const trackingNumber = hasTracking ? `TRK${String(i).padStart(9, '0')}` : undefined;
+
+    additionalOrders.push({
+      id: String(1000 + i),
+      orderNumber: `#${1000 + i}`,
+      customerName: name,
+      customerEmail: `${name.toLowerCase().replace(' ', '.')}@example.com`,
+      customerPhone: `+91 ${String(Math.floor(Math.random() * 90000) + 10000)} ${String(Math.floor(Math.random() * 90000) + 10000)}`,
+      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status,
+      total: Math.floor(Math.random() * 5000) + 500,
+      trackingNumber,
+      carrier,
+      trackingUrl: trackingNumber && carrier ? `https://${carrier.toLowerCase()}.com/track/${trackingNumber}` : undefined,
+      qikinkOrderId: `QK-2024-${String(i).padStart(3, '0')}`,
+      lastSyncAt: hasTracking ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString() : undefined
+    });
+  }
+
+  return additionalOrders;
+};
+
+async function fetchShopifyOrders(domain: string, accessToken: string, limit: number = 200): Promise<Order[]> {
   try {
     // Clean domain - remove protocol and trailing slashes
     const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -122,6 +165,8 @@ async function fetchShopifyOrders(domain: string, accessToken: string, limit: nu
         (attr: any) => attr.name === 'last_sync' || attr.name === 'qikink_last_sync'
       )?.value;
 
+      console.log("*** order", order)
+
       return {
         id: order.id.toString(),
         orderNumber: order.name,
@@ -129,6 +174,7 @@ async function fetchShopifyOrders(domain: string, accessToken: string, limit: nu
           ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim() || 'Guest'
           : 'Guest',
         customerEmail: order.customer?.email || order.email || '',
+        customerPhone: order.customer?.phone || order.phone || '',
         createdAt: order.created_at,
         status: mapShopifyStatus(order.fulfillment_status, order.financial_status),
         total: parseFloat(order.total_price || '0'),
@@ -168,6 +214,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || 'all';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '25');
     
     // Get API credentials from headers
     const shopifyDomain = request.headers.get('x-shopify-domain');
@@ -177,7 +225,7 @@ export async function GET(request: NextRequest) {
 
     if (shopifyDomain && shopifyToken) {
       try {
-        orders = await fetchShopifyOrders(shopifyDomain, shopifyToken);
+        orders = await fetchShopifyOrders(shopifyDomain, shopifyToken, 200);
       } catch (error) {
         console.error('Failed to fetch Shopify orders, using mock data:', error);
         // Return error response instead of falling back to mock data
@@ -185,12 +233,18 @@ export async function GET(request: NextRequest) {
           success: false,
           error: `Failed to fetch orders from Shopify: ${error instanceof Error ? error.message : 'Unknown error'}`,
           data: [],
-          total: 0
+          total: 0,
+          totalPages: 0,
+          currentPage: page,
+          hasNextPage: false,
+          hasPrevPage: false
         }, { status: 500 });
       }
     } else {
       // Use mock data if no credentials provided (for demo purposes)
-      orders = mockOrders;
+      // Generate 200+ orders for pagination demo
+      const allMockOrders = [...mockOrders, ...generateMockOrders(200)];
+      orders = allMockOrders;
     }
 
     // Apply filters
@@ -199,6 +253,7 @@ export async function GET(request: NextRequest) {
         order.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
         order.customerName.toLowerCase().includes(search.toLowerCase()) ||
         order.customerEmail.toLowerCase().includes(search.toLowerCase()) ||
+        (order.customerPhone && order.customerPhone.toLowerCase().includes(search.toLowerCase())) ||
         (order.trackingNumber && order.trackingNumber.toLowerCase().includes(search.toLowerCase())) ||
         (order.qikinkOrderId && order.qikinkOrderId.toLowerCase().includes(search.toLowerCase()));
       
@@ -210,10 +265,21 @@ export async function GET(request: NextRequest) {
     // Sort orders by creation date (newest first)
     filteredOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+    // Apply pagination
+    const totalOrders = filteredOrders.length;
+    const totalPages = Math.ceil(totalOrders / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
     return NextResponse.json({
       success: true,
-      data: filteredOrders,
-      total: filteredOrders.length,
+      data: paginatedOrders,
+      total: totalOrders,
+      totalPages,
+      currentPage: page,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
       isLiveData: !!(shopifyDomain && shopifyToken)
     });
   } catch (error) {
@@ -223,7 +289,11 @@ export async function GET(request: NextRequest) {
         success: false, 
         error: 'Failed to fetch orders',
         data: [],
-        total: 0
+        total: 0,
+        totalPages: 0,
+        currentPage: 1,
+        hasNextPage: false,
+        hasPrevPage: false
       },
       { status: 500 }
     );

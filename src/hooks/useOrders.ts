@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Order } from '@/types';
+import { Order, PaginationInfo, ViewMode } from '@/types';
 import { useSettings } from './useSettings';
 
 export const useOrders = () => {
@@ -9,6 +9,16 @@ export const useOrders = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [viewMode, setViewMode] = useState<ViewMode>('list'); // Changed default to list
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
+    total: 0,
+    totalPages: 0,
+    currentPage: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
   const { config } = useSettings();
 
   const fetchOrders = async () => {
@@ -17,6 +27,8 @@ export const useOrders = () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (statusFilter !== 'all') params.append('status', statusFilter);
+      params.append('page', currentPage.toString());
+      params.append('limit', pageSize.toString());
 
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
@@ -41,6 +53,13 @@ export const useOrders = () => {
       const result = await response.json();
       if (result.success) {
         setOrders(result.data);
+        setPaginationInfo({
+          total: result.total,
+          totalPages: result.totalPages,
+          currentPage: result.currentPage,
+          hasNextPage: result.hasNextPage,
+          hasPrevPage: result.hasPrevPage
+        });
       } else {
         throw new Error(result.error || 'Failed to fetch orders');
       }
@@ -53,8 +72,17 @@ export const useOrders = () => {
   };
 
   useEffect(() => {
+    // Reset to first page when search or filter changes
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      fetchOrders();
+    }
+  }, [searchTerm, statusFilter, pageSize, config.shopifyDomain, config.shopifyAccessToken]);
+
+  useEffect(() => {
     fetchOrders();
-  }, [searchTerm, statusFilter, config.shopifyDomain, config.shopifyAccessToken]);
+  }, [currentPage]);
 
   const updateOrderTracking = async (orderId: string, trackingData: Partial<Order>) => {
     try {
@@ -90,7 +118,7 @@ export const useOrders = () => {
         headers,
         body: JSON.stringify({
           trackingNumber: trackingData.trackingNumber,
-          carrier: trackingData.carrier,
+          trackingUrl: trackingData.trackingUrl,
           status: trackingData.status
         }),
       });
@@ -107,10 +135,7 @@ export const useOrders = () => {
             order.id === orderId 
               ? { 
                   ...order, 
-                  ...trackingData, 
-                  trackingUrl: trackingData.trackingNumber 
-                    ? `https://${trackingData.carrier?.toLowerCase()}.com/track/${trackingData.trackingNumber}` 
-                    : undefined,
+                  ...trackingData,
                   lastSyncAt: new Date().toISOString() 
                 }
               : order
@@ -181,6 +206,13 @@ export const useOrders = () => {
     setSearchTerm,
     statusFilter,
     setStatusFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    viewMode,
+    setViewMode,
+    paginationInfo,
     updateOrderTracking,
     syncAllOrders,
     refetch: fetchOrders

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 interface TrackingUpdateRequest {
   trackingNumber: string;
-  carrier: string;
+  trackingUrl?: string;
   status?: string;
 }
 
@@ -29,8 +29,8 @@ async function updateShopifyOrder(
               value: trackingData.trackingNumber
             },
             {
-              name: 'carrier',
-              value: trackingData.carrier
+              name: 'tracking_url',
+              value: trackingData.trackingUrl || ''
             }
           ]
         }
@@ -65,7 +65,7 @@ async function updateQikinkTracking(
       },
       body: JSON.stringify({
         tracking_number: trackingData.trackingNumber,
-        carrier: trackingData.carrier,
+        tracking_url: trackingData.trackingUrl,
         status: trackingData.status || 'shipped'
       })
     });
@@ -142,7 +142,7 @@ export async function PUT(
       data: {
         orderId,
         trackingNumber: trackingData.trackingNumber,
-        carrier: trackingData.carrier,
+        trackingUrl: trackingData.trackingUrl,
         status: trackingData.status || 'shipped',
         updatedAt: new Date().toISOString(),
         shopifyResult: results.shopify,

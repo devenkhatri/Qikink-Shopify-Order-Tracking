@@ -5,10 +5,13 @@ import { Header } from '@/components/Header';
 import { SearchAndFilter } from '@/components/SearchAndFilter';
 import { StatsCards } from '@/components/StatsCards';
 import { OrderCard } from '@/components/OrderCard';
+import { OrderListView } from '@/components/OrderListView';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
 import { NotificationToast } from '@/components/NotificationToast';
 import { SettingsModal } from '@/components/SettingsModal';
+import { ViewToggle } from '@/components/ViewToggle';
+import { Pagination } from '@/components/Pagination';
 import { useOrders } from '@/hooks/useOrders';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -20,6 +23,13 @@ export default function Home() {
     setSearchTerm,
     statusFilter,
     setStatusFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    viewMode,
+    setViewMode,
+    paginationInfo,
     updateOrderTracking,
     syncAllOrders
   } = useOrders();
@@ -129,12 +139,17 @@ export default function Home() {
         )}
 
         <div className="space-y-8">
-          <SearchAndFilter
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-          />
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex-1 w-full lg:w-auto">
+              <SearchAndFilter
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+              />
+            </div>
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
 
           <StatsCards orders={orders} />
 
@@ -147,19 +162,37 @@ export default function Home() {
               <EmptyState />
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-              {orders.map((order, index) => (
-                <div 
-                  key={order.id} 
-                  className="animate-slide-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <OrderCard
-                    order={order}
+            <div className="space-y-6">
+              <div className="animate-fade-in">
+                {viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {orders.map((order, index) => (
+                      <div 
+                        key={order.id} 
+                        className="animate-slide-up"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <OrderCard
+                          order={order}
+                          onUpdateTracking={handleUpdateTracking}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <OrderListView
+                    orders={orders}
                     onUpdateTracking={handleUpdateTracking}
                   />
-                </div>
-              ))}
+                )}
+              </div>
+
+              <Pagination
+                paginationInfo={paginationInfo}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+              />
             </div>
           )}
         </div>

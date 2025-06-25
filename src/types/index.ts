@@ -3,6 +3,7 @@ export interface Order {
   orderNumber: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   createdAt: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   total: number;
@@ -35,3 +36,13 @@ export interface ApiConfig {
   shopifyDomain: string;
   shopifyAccessToken: string;
 }
+
+export interface PaginationInfo {
+  total: number;
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export type ViewMode = 'grid' | 'list';
