@@ -29,9 +29,9 @@ export interface QikinkApiResponse {
 }
 
 export interface ApiConfig {
-  qikinkApiKey: string;
-  qikinkApiUrl: string;
   qikinkClientId: string;
+  qikinkAccessToken: string;
+  qikinkApiUrl: string;
   shopifyDomain: string;
   shopifyAccessToken: string;
 }

@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Package, Truck, CheckCircle, Clock } from 'lucide-react';
-import { Order } from '../types';
+import { Order } from '@/types';
 
 interface StatsCardsProps {
   orders: Order[];

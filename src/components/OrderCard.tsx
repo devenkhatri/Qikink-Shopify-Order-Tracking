@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
 import { ExternalLink, Truck, User, Mail, Calendar, Package, Edit3, Check, X } from 'lucide-react';
-import { Order } from '../types';
+import { Order } from '@/types';
 import { OrderStatusBadge } from './OrderStatusBadge';
 
 interface OrderCardProps {

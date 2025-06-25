@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { X, Save, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { ApiConfig } from '../types';
-import { shopifyApi, qikinkApi } from '../services/api';
+import { ApiConfig } from '@/types';
+import { useQikinkApi } from '@/hooks/useQikinkApi';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,9 +19,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentConfig
 }) => {
   const [config, setConfig] = useState<ApiConfig>(currentConfig);
-  const [showQikinkKey, setShowQikinkKey] = useState(false);
+  const [showQikinkToken, setShowQikinkToken] = useState(false);
   const [showShopifyToken, setShowShopifyToken] = useState(false);
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     qikink: 'idle' | 'testing' | 'success' | 'error';
     shopify: 'idle' | 'testing' | 'success' | 'error';
@@ -27,10 +28,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     qikink: 'idle',
     shopify: 'idle'
   });
-  const [errorMessage, setErrorMessage] = useState<{
-    qikink?: string;
-    shopify?: string;
-  }>({});
+
+  const { testConnection, loading } = useQikinkApi();
 
   useEffect(() => {
     setConfig(currentConfig);
@@ -43,57 +42,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const testQikinkConnection = async () => {
     setConnectionStatus(prev => ({ ...prev, qikink: 'testing' }));
-    setErrorMessage(prev => ({ ...prev, qikink: undefined }));
-    setIsTestingConnection(true);
     
     try {
-      const isConnected = await qikinkApi.testConnection(config);
+      const result = await testConnection('qikink', {
+        clientId: config.qikinkClientId,
+        accessToken: config.qikinkAccessToken,
+        apiUrl: config.qikinkApiUrl
+      });
+      
       setConnectionStatus(prev => ({ 
         ...prev, 
-        qikink: isConnected ? 'success' : 'error' 
+        qikink: result.success ? 'success' : 'error' 
       }));
-      if (!isConnected) {
-        setErrorMessage(prev => ({ 
-          ...prev, 
-          qikink: 'Failed to connect to Qikink API. Please check your credentials and try again.' 
-        }));
-      }
     } catch (error) {
       setConnectionStatus(prev => ({ ...prev, qikink: 'error' }));
-      setErrorMessage(prev => ({ 
-        ...prev, 
-        qikink: error instanceof Error ? error.message : 'Failed to connect to Qikink API' 
-      }));
-    } finally {
-      setIsTestingConnection(false);
     }
   };
 
   const testShopifyConnection = async () => {
     setConnectionStatus(prev => ({ ...prev, shopify: 'testing' }));
-    setErrorMessage(prev => ({ ...prev, shopify: undefined }));
-    setIsTestingConnection(true);
     
     try {
-      const isConnected = await shopifyApi.testConnection(config);
+      const result = await testConnection('shopify', {
+        domain: config.shopifyDomain,
+        accessToken: config.shopifyAccessToken
+      });
+      
       setConnectionStatus(prev => ({ 
         ...prev, 
-        shopify: isConnected ? 'success' : 'error' 
+        shopify: result.success ? 'success' : 'error' 
       }));
-      if (!isConnected) {
-        setErrorMessage(prev => ({ 
-          ...prev, 
-          shopify: 'Failed to connect to Shopify API. Please check your credentials and try again.' 
-        }));
-      }
     } catch (error) {
       setConnectionStatus(prev => ({ ...prev, shopify: 'error' }));
-      setErrorMessage(prev => ({ 
-        ...prev, 
-        shopify: error instanceof Error ? error.message : 'Failed to connect to Shopify API' 
-      }));
-    } finally {
-      setIsTestingConnection(false);
     }
   };
 
@@ -132,7 +112,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <h3 className="text-lg font-medium text-gray-900">Shopify Configuration</h3>
               <button
                 onClick={testShopifyConnection}
-                disabled={isTestingConnection || !config.shopifyDomain || !config.shopifyAccessToken}
+                disabled={loading || !config.shopifyDomain || !config.shopifyAccessToken}
                 className="flex items-center space-x-2 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {getStatusIcon(connectionStatus.shopify)}
@@ -140,13 +120,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </div>
             
-            {errorMessage.shopify && (
-              <div className="flex items-center space-x-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                <AlertCircle className="w-4 h-4" />
-                <span>{errorMessage.shopify}</span>
-              </div>
-            )}
-
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -211,20 +184,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <h3 className="text-lg font-medium text-gray-900">Qikink Configuration</h3>
               <button
                 onClick={testQikinkConnection}
-                disabled={isTestingConnection || !config.qikinkApiKey || !config.qikinkApiUrl || !config.qikinkClientId}
+                disabled={loading || !config.qikinkClientId || !config.qikinkAccessToken || !config.qikinkApiUrl}
                 className="flex items-center space-x-2 px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {getStatusIcon(connectionStatus.qikink)}
                 <span>Test Connection</span>
               </button>
             </div>
-
-            {errorMessage.qikink && (
-              <div className="flex items-center space-x-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                <AlertCircle className="w-4 h-4" />
-                <span>{errorMessage.qikink}</span>
-              </div>
-            )}
 
             <div className="grid grid-cols-1 gap-4">
               <div>
@@ -245,42 +211,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Client Id
+                  Client ID
                 </label>
                 <input
                   type="text"
-                  placeholder="qk_client_xxxxxxxxxxxxxxxx"
+                  placeholder="qk_client_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   value={config.qikinkClientId}
                   onChange={(e) => setConfig(prev => ({ ...prev, qikinkClientId: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Your Qikink Client ID from the developer dashboard
+                  Your Qikink client ID from the developer dashboard
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  API Key
+                  Access Token
                 </label>
                 <div className="relative">
                   <input
-                    type={showQikinkKey ? 'text' : 'password'}
-                    placeholder="qk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    value={config.qikinkApiKey}
-                    onChange={(e) => setConfig(prev => ({ ...prev, qikinkApiKey: e.target.value }))}
+                    type={showQikinkToken ? 'text' : 'password'}
+                    placeholder="qk_token_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={config.qikinkAccessToken}
+                    onChange={(e) => setConfig(prev => ({ ...prev, qikinkAccessToken: e.target.value }))}
                     className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowQikinkKey(!showQikinkKey)}
+                    onClick={() => setShowQikinkToken(!showQikinkToken)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                   >
-                    {showQikinkKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showQikinkToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Your Qikink API key from the developer dashboard
+                  Your Qikink access token from the developer dashboard
                 </p>
               </div>
             </div>
@@ -305,7 +271,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <h4 className="text-sm font-medium text-blue-900 mb-2">Need Help?</h4>
             <ul className="text-xs text-blue-700 space-y-1">
               <li>• For Shopify: Create a private app in your Shopify admin to get the access token</li>
-              <li>• For Qikink: Get your API key from the Qikink developer dashboard</li>
+              <li>• For Qikink: Get your client ID and access token from the Qikink developer dashboard</li>
               <li>• Test connections to ensure your credentials are working correctly</li>
               <li>• All credentials are stored securely and encrypted</li>
             </ul>

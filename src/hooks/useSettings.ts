@@ -1,10 +1,12 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { ApiConfig } from '../types';
+import { ApiConfig } from '@/types';
 
 const DEFAULT_CONFIG: ApiConfig = {
-  qikinkApiKey: '',
-  qikinkApiUrl: 'https://api.qikink.com',
   qikinkClientId: '',
+  qikinkAccessToken: '',
+  qikinkApiUrl: 'https://api.qikink.com',
   shopifyDomain: '',
   shopifyAccessToken: ''
 };
@@ -46,7 +48,8 @@ export const useSettings = () => {
 
   const isConfigured = () => {
     return !!(
-      config.qikinkApiKey &&
+      config.qikinkClientId &&
+      config.qikinkAccessToken &&
       config.qikinkApiUrl &&
       config.shopifyDomain &&
       config.shopifyAccessToken
