@@ -111,8 +111,8 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!isConfigured() && (
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 mb-8 shadow-sm animate-fade-in">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 sm:p-6 mb-8 shadow-sm animate-fade-in">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -121,7 +121,7 @@ export default function Home() {
                     </svg>
                   </div>
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="text-lg font-semibold text-yellow-800 mb-1">Configuration Required</h3>
                   <p className="text-sm text-yellow-700 leading-relaxed">
                     Please configure your Shopify and Qikink API settings to start syncing orders and tracking information.
@@ -130,7 +130,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => setIsSettingsOpen(true)}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 Configure Now
               </button>
@@ -163,6 +163,16 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Top Pagination */}
+              <div className="animate-fade-in">
+                <Pagination
+                  paginationInfo={paginationInfo}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
+                />
+              </div>
+
               <div className="animate-fade-in">
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -187,12 +197,15 @@ export default function Home() {
                 )}
               </div>
 
-              <Pagination
-                paginationInfo={paginationInfo}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setPageSize}
-              />
+              {/* Bottom Pagination */}
+              <div className="animate-fade-in">
+                <Pagination
+                  paginationInfo={paginationInfo}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
+                />
+              </div>
             </div>
           )}
         </div>

@@ -1,9 +1,21 @@
+export interface LineItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  variant_title?: string;
+  product_id: string;
+  variant_id: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  customerFirstName?: string;
+  customerLastName?: string;
   createdAt: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   total: number;
@@ -12,6 +24,11 @@ export interface Order {
   trackingUrl?: string;
   qikinkOrderId?: string;
   lastSyncAt?: string;
+  lineItems?: LineItem[];
+  tags?: string[];
+  paymentGateway?: string;
+  financialStatus?: string;
+  fulfillmentStatus?: string;
 }
 
 export interface TrackingUpdate {

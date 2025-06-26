@@ -29,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Sparkles className="w-2.5 h-2.5 text-white" />
               </div>
             </div>
-            <div>
+            <div className="hidden sm:block">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 Qikink Order Tracking
               </h1>
@@ -37,14 +37,19 @@ export const Header: React.FC<HeaderProps> = ({
                 Manage and sync order tracking information
               </p>
             </div>
+            <div className="block sm:hidden">
+              <h1 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Qikink Tracking
+              </h1>
+            </div>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={onSync}
               disabled={isSyncing}
               className={`
-                flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm
+                flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm text-sm
                 ${isSyncing 
                   ? 'bg-blue-100 text-blue-600 cursor-not-allowed' 
                   : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
@@ -52,7 +57,8 @@ export const Header: React.FC<HeaderProps> = ({
               `}
             >
               <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync All'}</span>
+              <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Sync All'}</span>
+              <span className="sm:hidden">{isSyncing ? 'Sync...' : 'Sync'}</span>
             </button>
             
             <button 
